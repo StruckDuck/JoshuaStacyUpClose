@@ -1,6 +1,24 @@
 // Shared helpers for the site's server functions.
 
-export const STATUSES = ["new", "replied", "contract", "booked", "passed"];
+export const STATUSES = ["new", "replied", "contract", "signed", "booked", "passed"];
+export const EXPERIENCES = { hangout: "The Hangout", station: "The Station", show: "The Show" };
+export const TERMS_VERSION = "v1";
+
+export function newToken() {
+  const bytes = crypto.getRandomValues(new Uint8Array(24));
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+export function validDate(s) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const d = new Date(s + "T12:00:00Z");
+  return !isNaN(d) && d.toISOString().slice(0, 10) === s;
+}
+export function validTime(s) {
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(s);
+}
 
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS inquiries (
@@ -25,6 +43,32 @@ const SCHEMA = [
     ts INTEGER NOT NULL
   )`,
   `CREATE INDEX IF NOT EXISTS idx_events ON events(kind, ip, ts)`,
+  `CREATE TABLE IF NOT EXISTS contracts (
+    token TEXT PRIMARY KEY,
+    inquiry_id TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'sent',
+    terms_version TEXT NOT NULL,
+    client_name TEXT NOT NULL,
+    client_email TEXT NOT NULL,
+    experience TEXT NOT NULL,
+    event_date TEXT NOT NULL,
+    start_time TEXT NOT NULL,
+    end_time TEXT NOT NULL,
+    venue TEXT NOT NULL,
+    fee_cents INTEGER NOT NULL,
+    deposit_cents INTEGER NOT NULL,
+    signed_at INTEGER,
+    signed_name TEXT,
+    signed_ip TEXT,
+    signed_ua TEXT,
+    client_phone TEXT,
+    onsite_name TEXT,
+    onsite_phone TEXT,
+    social_choice TEXT,
+    ig_handle TEXT
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_contracts_inquiry ON contracts(inquiry_id)`,
 ];
 
 export async function ensureSchema(db) {

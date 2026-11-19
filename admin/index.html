@@ -40,7 +40,8 @@
   .pill { flex: none; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.15rem 0.5rem; border: 1px solid var(--rule); color: var(--parch); }
   .pill.new { background: var(--lith); border-color: var(--lith); color: var(--foxed); }
   .pill.contract { background: var(--faded); border-color: var(--faded); color: var(--foxed); }
-  .pill.booked { background: var(--foxed); border-color: var(--foxed); color: var(--inkwell); }
+  .pill.signed { background: var(--foxed); border-color: var(--foxed); color: var(--inkwell); }
+  .pill.booked { background: #5E7A4A; border-color: #5E7A4A; color: var(--foxed); }
   .pill.passed { opacity: 0.6; }
   .empty { color: var(--parch); text-align: center; padding: 2.5rem 0; }
   label { display: block; font-size: 0.75rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--parch); margin: 1.4rem 0 0.4rem; }
@@ -63,6 +64,16 @@
   .seg button { background: none; color: var(--parch); border: 1px solid var(--rule); font: inherit; font-size: 0.9rem; padding: 0.55rem 0.9rem; cursor: pointer; }
   .seg button.on { background: var(--foxed); color: var(--inkwell); border-color: var(--foxed); }
   .saved { color: var(--parch); font-size: 0.85rem; margin-left: 0.8rem; }
+  .panel { background: var(--oak); border-left: 3px solid var(--lith); padding: 1rem 1.1rem; margin: 1.2rem 0 0; }
+  .panel h2 { font-size: 1.05rem; font-weight: normal; margin: 0 0 0.4rem; }
+  .panel p { margin: 0.2rem 0; color: var(--parch); }
+  .panel .row2 { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.9rem; }
+  .btn2 { display: inline-block; background: none; color: var(--foxed); border: 1px solid var(--parch); font: inherit; font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.65rem 1rem; text-decoration: none; cursor: pointer; }
+  .btn2.solid { background: var(--lith); border-color: var(--lith); }
+  input[type=text], input[type=number], input[type=date], input[type=time], input[type=email] { width: 100%; background: var(--oak); color: var(--foxed); border: 1px solid var(--rule); font: inherit; font-size: 1rem; padding: 0.8rem; border-radius: 0; color-scheme: dark; }
+  .two { display: flex; gap: 0.8rem; } .two > div { flex: 1; min-width: 0; }
+  .hint { color: var(--parch); font-size: 0.9rem; margin: 0.4rem 0 0; }
+  .sumbox { background: var(--oak); padding: 0.8rem 1rem; margin-top: 1.2rem; color: var(--parch); }
 </style>
 </head>
 <body>
@@ -94,6 +105,7 @@
   <h1 id="d-name"></h1>
   <p class="sub" id="d-sub"></p>
   <div class="actions" id="d-actions"></div>
+  <div id="d-contract"></div>
   <label>Status</label>
   <div class="seg" id="d-status"></div>
   <dl id="d-fields"></dl>
@@ -102,9 +114,34 @@
   <p><button class="btn" id="d-save" type="button">Save notes</button><span class="saved" id="d-saved"></span></p>
 </section>
 
+<section class="screen" id="cform" hidden>
+  <div class="back"><button class="iconbtn" id="cf-back" type="button">&larr; Back</button></div>
+  <h1 id="cf-title">Start contract</h1>
+  <label>Experience</label>
+  <div class="seg" id="cf-exp"></div>
+  <p class="hint" id="cf-exp-hint"></p>
+  <label for="cf-date">Event date</label>
+  <input type="date" id="cf-date">
+  <div class="two">
+    <div><label for="cf-start">Start time</label><input type="time" id="cf-start"></div>
+    <div><label for="cf-end">End time</label><input type="time" id="cf-end"></div>
+  </div>
+  <label for="cf-venue">Venue name and address</label>
+  <textarea id="cf-venue" style="min-height:80px"></textarea>
+  <label for="cf-fee">Total fee ($)</label>
+  <input type="number" id="cf-fee" inputmode="decimal" min="0" step="0.01">
+  <div class="sumbox" id="cf-sum">Enter the fee to see the deposit.</div>
+  <label for="cf-cname">Client name</label>
+  <input type="text" id="cf-cname">
+  <label for="cf-cemail">Client email</label>
+  <input type="email" id="cf-cemail">
+  <p style="margin-top:1.4rem"><button class="btn" id="cf-create" type="button">Create link</button></p>
+  <div class="err" id="cf-err" role="alert"></div>
+</section>
+
 <script>
 (function () {
-  var STATUSES = [["new", "New"], ["replied", "Replied"], ["contract", "Contract sent"], ["booked", "Booked"], ["passed", "Passed"]];
+  var STATUSES = [["new", "New"], ["replied", "Replied"], ["contract", "Contract sent"], ["signed", "Signed"], ["booked", "Booked"], ["passed", "Passed"]];
   var LABEL = {}; STATUSES.forEach(function (s) { LABEL[s[0]] = s[1]; });
   var FILTERS = [["open", "Open"], ["booked", "Booked"], ["passed", "Passed"], ["all", "All"]];
   var items = [], filter = "open";
@@ -117,7 +154,7 @@
     return n;
   }
   function show(which) {
-    ["login", "list", "detail"].forEach(function (s) { $(s).hidden = s !== which; });
+    ["login", "list", "detail", "cform"].forEach(function (s) { $(s).hidden = s !== which; });
     window.scrollTo(0, 0);
   }
 
@@ -142,7 +179,7 @@
 
   function matches(i) {
     if (filter === "all") return true;
-    if (filter === "open") return i.status === "new" || i.status === "replied" || i.status === "contract";
+    if (filter === "open") return i.status === "new" || i.status === "replied" || i.status === "contract" || i.status === "signed";
     return i.status === filter;
   }
 
@@ -193,6 +230,8 @@
     var acts = $("d-actions"); acts.replaceChildren();
     var mail = el("a", null, "Email"); mail.href = "mailto:" + i.email; acts.appendChild(mail);
 
+    renderContractPanel(i);
+
     var seg = $("d-status"); seg.replaceChildren();
     STATUSES.forEach(function (s) {
       var b = el("button", i.status === s[0] ? "on" : "", s[1]); b.type = "button";
@@ -225,6 +264,98 @@
     };
     show("detail");
   }
+
+  var EXPN = { hangout: "The Hangout", station: "The Station", show: "The Show" };
+  var EXPHINT = { hangout: "Minimum booking: 2 hours.", station: "Minimum booking: 2 hours.", show: "45 minutes, seats up to 50." };
+  function money(c) { return "$" + (c / 100).toLocaleString("en-US", { minimumFractionDigits: c % 100 ? 2 : 0, maximumFractionDigits: 2 }); }
+  function dateNice(s) { return new Date(s + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }); }
+  function linkFor(c) { return location.origin + "/sign/?t=" + c.token; }
+
+  function renderContractPanel(i) {
+    var box = $("d-contract"); box.replaceChildren();
+    var c = i.contract;
+    if (!c) {
+      var b = el("button", "btn", "Start contract"); b.type = "button"; b.style.marginTop = "1.2rem";
+      b.addEventListener("click", function () { openContractForm(i); });
+      box.appendChild(b); return;
+    }
+    var p = el("div", "panel");
+    p.appendChild(el("h2", null, "Contract: " + (c.status === "signed" ? "Signed" : "Sent, waiting for signature")));
+    p.appendChild(el("p", null, EXPN[c.experience] + " \u00b7 " + dateNice(c.event_date)));
+    p.appendChild(el("p", null, "Fee " + money(c.fee_cents) + " \u00b7 Deposit " + money(c.deposit_cents)));
+    if (c.status === "signed") p.appendChild(el("p", null, "Signed by " + c.signed_name + " on " + new Date(c.signed_at).toLocaleDateString(undefined, { month: "short", day: "numeric" }) + ". When the deposit arrives, set the status to Booked."));
+    var row = el("div", "row2");
+    if (c.status !== "signed") {
+      var m = el("a", "btn2 solid", "Email link");
+      m.href = "mailto:" + c.client_email + "?body=" + encodeURIComponent(linkFor(c));
+      row.appendChild(m);
+      var cp = el("button", "btn2", "Copy link"); cp.type = "button";
+      cp.addEventListener("click", function () {
+        var u = linkFor(c);
+        if (navigator.clipboard) navigator.clipboard.writeText(u).then(function () { cp.textContent = "Copied"; }, function () { prompt("Copy this link", u); });
+        else prompt("Copy this link", u);
+      });
+      row.appendChild(cp);
+    }
+    var o = el("a", "btn2", c.status === "signed" ? "View signed agreement" : "Preview"); o.href = linkFor(c); o.target = "_blank"; o.rel = "noopener"; row.appendChild(o);
+    if (c.status !== "signed") {
+      var v = el("button", "btn2", "Void"); v.type = "button";
+      v.addEventListener("click", function () {
+        if (!confirm("Void this contract? The link will stop working.")) return;
+        api("/api/admin/contract-void", { token: c.token }).then(function (d) {
+          if (d.ok) load(); else alert(d.error || "Could not void it.");
+        });
+      });
+      row.appendChild(v);
+    }
+    p.appendChild(row);
+    box.appendChild(p);
+  }
+
+  var cf = { inquiry: null, exp: "" };
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function addMinutes(t, m) { var p = t.split(":"), tot = (+p[0]) * 60 + (+p[1]) + m; tot = ((tot % 1440) + 1440) % 1440; return pad(Math.floor(tot / 60)) + ":" + pad(tot % 60); }
+  function updateSum() {
+    var f = parseFloat($("cf-fee").value);
+    if (!isFinite(f) || f <= 0) { $("cf-sum").textContent = "Enter the fee to see the deposit."; return; }
+    var fee = Math.round(f * 100), dep = Math.round(fee * 0.25);
+    $("cf-sum").textContent = "Deposit (25%): " + money(dep) + "   Balance: " + money(fee - dep);
+  }
+  function renderExpButtons() {
+    var seg = $("cf-exp"); seg.replaceChildren();
+    ["hangout", "station", "show"].forEach(function (k) {
+      var b = el("button", cf.exp === k ? "on" : "", EXPN[k]); b.type = "button";
+      b.addEventListener("click", function () {
+        cf.exp = k; renderExpButtons(); $("cf-exp-hint").textContent = EXPHINT[k];
+        if (k === "show" && $("cf-start").value) $("cf-end").value = addMinutes($("cf-start").value, 45);
+      });
+      seg.appendChild(b);
+    });
+  }
+  function openContractForm(i) {
+    cf.inquiry = i; cf.exp = "";
+    $("cf-title").textContent = "Contract for " + fullName(i);
+    ["cf-date", "cf-start", "cf-end", "cf-fee"].forEach(function (id) { $(id).value = ""; });
+    $("cf-venue").value = i.location || ""; $("cf-cname").value = fullName(i); $("cf-cemail").value = i.email;
+    $("cf-err").textContent = ""; $("cf-exp-hint").textContent = ""; $("cf-create").disabled = false;
+    renderExpButtons(); updateSum(); show("cform");
+  }
+  $("cf-fee").addEventListener("input", updateSum);
+  $("cf-start").addEventListener("change", function () { if (cf.exp === "show" && this.value) $("cf-end").value = addMinutes(this.value, 45); });
+  $("cf-back").addEventListener("click", function () { route(); });
+  $("cf-create").addEventListener("click", function () {
+    var err = $("cf-err"); err.textContent = "";
+    if (!cf.exp) { err.textContent = "Pick an experience."; return; }
+    $("cf-create").disabled = true;
+    api("/api/admin/contract", {
+      inquiry_id: cf.inquiry.id, experience: cf.exp, event_date: $("cf-date").value, start_time: $("cf-start").value, end_time: $("cf-end").value,
+      venue: $("cf-venue").value, fee: $("cf-fee").value, client_name: $("cf-cname").value, client_email: $("cf-cemail").value
+    }).then(function (d) {
+      $("cf-create").disabled = false;
+      if (!d.ok) { err.textContent = d.error || "Could not create the contract."; return; }
+      load();
+    }).catch(function () { $("cf-create").disabled = false; err.textContent = "Could not reach the site."; });
+  });
 
   function route() {
     var id = location.hash.slice(1);

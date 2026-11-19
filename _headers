@@ -1,5 +1,8 @@
 /admin/*
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store
+/sign/*
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
 /api/*
   Cache-Control: no-store
