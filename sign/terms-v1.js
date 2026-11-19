@@ -24,9 +24,9 @@
         lead: "Joshua Stacy, doing business as Joshua Stacy Up Close (“Performer”), will perform close-up magic for the person or organization named in Event details (“Client”) on the date and terms below.",
         items: [
           { text: "Performer contact: Fayetteville, AR. booking@joshuastacyupclose.com. (479) 510-3304. @Joshua_Stacy_Up_Close." },
-          { label: "Experiences.", text: "The Hangout (Performer moves through the room, performing for guests one small group at a time), The Station (Performer works at a set table and guests come to it), or The Show (a seated 45 minute performance), as marked in Event details." },
-          { label: "Minimum booking.", text: "45 minutes for The Show. 2 hours for The Hangout or The Station." },
-          { label: "Performance time.", text: "The Show is one continuous 45 minute performance. The Hangout and The Station run across the booked window, with short breaks as Performer needs them." },
+          { label: "Experiences.", text: "The Rounds (Performer moves through the room, performing for guests one small group at a time), The Station (Performer works at a set table and guests come to it), or The Show (a seated 45 minute performance), as marked in Event details." },
+          { label: "Minimum booking.", text: "45 minutes for The Show. 2 hours for The Rounds or The Station." },
+          { label: "Performance time.", text: "The Show is one continuous 45 minute performance. The Rounds and The Station run across the booked window, with short breaks as Performer needs them." },
           { label: "Audience size.", text: "The Show seats up to 50 guests." },
           { label: "Material.", text: "Performer chooses all material and adjusts it to the room. Nothing explicit." },
         ],

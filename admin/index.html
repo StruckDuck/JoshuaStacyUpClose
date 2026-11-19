@@ -265,7 +265,7 @@
     show("detail");
   }
 
-  var EXPN = { hangout: "The Hangout", station: "The Station", show: "The Show" };
+  var EXPN = { hangout: "The Rounds", station: "The Station", show: "The Show" };
   var EXPHINT = { hangout: "Minimum booking: 2 hours.", station: "Minimum booking: 2 hours.", show: "45 minutes, seats up to 50." };
   function money(c) { return "$" + (c / 100).toLocaleString("en-US", { minimumFractionDigits: c % 100 ? 2 : 0, maximumFractionDigits: 2 }); }
   function dateNice(s) { return new Date(s + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }); }

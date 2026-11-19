@@ -1,7 +1,7 @@
 // Shared helpers for the site's server functions.
 
 export const STATUSES = ["new", "replied", "contract", "signed", "booked", "passed"];
-export const EXPERIENCES = { hangout: "The Hangout", station: "The Station", show: "The Show" };
+export const EXPERIENCES = { hangout: "The Rounds", station: "The Station", show: "The Show" };
 export const TERMS_VERSION = "v1";
 
 export function newToken() {
