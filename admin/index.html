@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#141210">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Inquiries">
+<link rel="manifest" href="/admin/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/admin/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="/admin/icon-192.png">
+<title>Inquiries</title>
+<style>
+  :root {
+    --inkwell: #141210; --oak: #221C14; --lith: #C05020; --faded: #304050;
+    --parch: #C8B090; --foxed: #EDE0C0; --rule: rgba(200,176,144,0.22);
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--inkwell); color: var(--foxed); font-family: var(--serif); font-size: 17px; line-height: 1.5; }
+  body { min-height: 100vh; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  .screen { max-width: 640px; margin: 0 auto; padding: 1rem 1.1rem 3rem; }
+  [hidden] { display: none !important; }
+  h1 { font-size: 1.6rem; font-weight: normal; margin: 0; }
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.5rem 0 1rem; }
+  .iconbtn { background: none; border: 1px solid var(--rule); color: var(--parch); font: inherit; font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.5rem 0.85rem; cursor: pointer; }
+  .iconbtn:active { color: var(--foxed); }
+  .chips { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.9rem; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; background: none; color: var(--parch); border: 1px solid var(--rule); font: inherit; font-size: 0.85rem; padding: 0.4rem 0.9rem; border-radius: 999px; cursor: pointer; }
+  .chip.on { background: var(--foxed); color: var(--inkwell); border-color: var(--foxed); }
+  .card { display: block; width: 100%; text-align: left; background: var(--oak); color: inherit; border: 0; border-left: 3px solid var(--rule); font: inherit; padding: 0.9rem 1rem; margin-bottom: 0.6rem; cursor: pointer; }
+  .card.is-new { border-left-color: var(--lith); }
+  .card .top { display: flex; justify-content: space-between; gap: 0.75rem; align-items: baseline; }
+  .card .name { font-size: 1.1rem; }
+  .card .meta { color: var(--parch); font-size: 0.9rem; margin-top: 0.1rem; }
+  .pill { flex: none; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.15rem 0.5rem; border: 1px solid var(--rule); color: var(--parch); }
+  .pill.new { background: var(--lith); border-color: var(--lith); color: var(--foxed); }
+  .pill.contract { background: var(--faded); border-color: var(--faded); color: var(--foxed); }
+  .pill.booked { background: var(--foxed); border-color: var(--foxed); color: var(--inkwell); }
+  .pill.passed { opacity: 0.6; }
+  .empty { color: var(--parch); text-align: center; padding: 2.5rem 0; }
+  label { display: block; font-size: 0.75rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--parch); margin: 1.4rem 0 0.4rem; }
+  input[type=password], textarea { width: 100%; background: var(--oak); color: var(--foxed); border: 1px solid var(--rule); font: inherit; font-size: 1rem; padding: 0.8rem; border-radius: 0; }
+  textarea { min-height: 120px; resize: vertical; }
+  .btn { background: var(--lith); color: var(--foxed); border: 0; font: inherit; font-size: 0.9rem; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.85rem 1.4rem; cursor: pointer; }
+  .btn:disabled { opacity: 0.6; }
+  .err { color: #E08A5E; min-height: 1.4rem; margin-top: 0.75rem; font-size: 0.95rem; }
+  .login { padding-top: 22vh; }
+  .login h1 { margin-bottom: 1.5rem; }
+  .back { margin: 0.25rem 0 1rem; }
+  .detail h1 { font-size: 1.8rem; line-height: 1.2; margin-bottom: 0.25rem; }
+  .sub { color: var(--parch); margin: 0 0 1rem; }
+  .actions { display: flex; gap: 0.6rem; margin: 1rem 0 0.25rem; flex-wrap: wrap; }
+  .actions a { background: var(--lith); color: var(--foxed); text-decoration: none; font-size: 0.85rem; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.75rem 1.2rem; }
+  dl { margin: 0; }
+  dt { font-size: 0.75rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--parch); margin-top: 1.1rem; }
+  dd { margin: 0.15rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .seg { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .seg button { background: none; color: var(--parch); border: 1px solid var(--rule); font: inherit; font-size: 0.9rem; padding: 0.55rem 0.9rem; cursor: pointer; }
+  .seg button.on { background: var(--foxed); color: var(--inkwell); border-color: var(--foxed); }
+  .saved { color: var(--parch); font-size: 0.85rem; margin-left: 0.8rem; }
+</style>
+</head>
+<body>
+
+<section class="screen login" id="login" hidden>
+  <h1>Inquiries</h1>
+  <form id="login-form">
+    <label for="pass" style="margin-top:0">Passphrase</label>
+    <input type="password" id="pass" autocomplete="current-password" required>
+    <div style="margin-top:1rem"><button class="btn" id="login-btn" type="submit">Sign in</button></div>
+    <div class="err" id="login-err" role="alert"></div>
+  </form>
+</section>
+
+<section class="screen" id="list" hidden>
+  <div class="bar">
+    <h1>Inquiries</h1>
+    <div>
+      <button class="iconbtn" id="refresh" type="button">Refresh</button>
+    </div>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div id="items"></div>
+  <p style="margin-top:2rem"><button class="iconbtn" id="logout" type="button">Sign out</button></p>
+</section>
+
+<section class="screen detail" id="detail" hidden>
+  <div class="back"><button class="iconbtn" id="back" type="button">&larr; All inquiries</button></div>
+  <h1 id="d-name"></h1>
+  <p class="sub" id="d-sub"></p>
+  <div class="actions" id="d-actions"></div>
+  <label>Status</label>
+  <div class="seg" id="d-status"></div>
+  <dl id="d-fields"></dl>
+  <label for="d-notes">Your notes</label>
+  <textarea id="d-notes"></textarea>
+  <p><button class="btn" id="d-save" type="button">Save notes</button><span class="saved" id="d-saved"></span></p>
+</section>
+
+<script>
+(function () {
+  var STATUSES = [["new", "New"], ["replied", "Replied"], ["contract", "Contract sent"], ["booked", "Booked"], ["passed", "Passed"]];
+  var LABEL = {}; STATUSES.forEach(function (s) { LABEL[s[0]] = s[1]; });
+  var FILTERS = [["open", "Open"], ["booked", "Booked"], ["passed", "Passed"], ["all", "All"]];
+  var items = [], filter = "open";
+
+  var $ = function (id) { return document.getElementById(id); };
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+  function show(which) {
+    ["login", "list", "detail"].forEach(function (s) { $(s).hidden = s !== which; });
+    window.scrollTo(0, 0);
+  }
+
+  function api(path, body) {
+    var opts = body === undefined ? { credentials: "same-origin" } : {
+      method: "POST", credentials: "same-origin",
+      headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+    };
+    return fetch(path, opts).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (d) { d.httpStatus = r.status; return d; });
+    });
+  }
+
+  function ago(ms) {
+    var s = Math.max(1, Math.floor((Date.now() - ms) / 1000));
+    if (s < 3600) return Math.max(1, Math.floor(s / 60)) + "m ago";
+    if (s < 86400) return Math.floor(s / 3600) + "h ago";
+    if (s < 86400 * 14) return Math.floor(s / 86400) + "d ago";
+    return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  }
+  function fullName(i) { return (i.first_name + " " + (i.last_name || "")).trim(); }
+
+  function matches(i) {
+    if (filter === "all") return true;
+    if (filter === "open") return i.status === "new" || i.status === "replied" || i.status === "contract";
+    return i.status === filter;
+  }
+
+  function renderChips() {
+    var box = $("chips"); box.replaceChildren();
+    var newCount = items.filter(function (i) { return i.status === "new"; }).length;
+    FILTERS.forEach(function (f) {
+      var label = f[1] + (f[0] === "open" && newCount ? " (" + newCount + " new)" : "");
+      var b = el("button", "chip" + (filter === f[0] ? " on" : ""), label);
+      b.type = "button";
+      b.addEventListener("click", function () { filter = f[0]; renderList(); });
+      box.appendChild(b);
+    });
+  }
+
+  function renderList() {
+    renderChips();
+    var box = $("items"); box.replaceChildren();
+    var shown = items.filter(matches);
+    if (!shown.length) { box.appendChild(el("p", "empty", items.length ? "Nothing here." : "No inquiries yet.")); return; }
+    shown.forEach(function (i) {
+      var c = el("button", "card" + (i.status === "new" ? " is-new" : ""));
+      c.type = "button";
+      var top = el("div", "top");
+      top.appendChild(el("span", "name", fullName(i)));
+      top.appendChild(el("span", "pill " + i.status, LABEL[i.status] || i.status));
+      c.appendChild(top);
+      var meta = [i.event_type, i.event_date].filter(Boolean).join(" · ");
+      c.appendChild(el("div", "meta", meta));
+      c.appendChild(el("div", "meta", "Received " + ago(i.created_at)));
+      c.addEventListener("click", function () { location.hash = "#" + i.id; });
+      box.appendChild(c);
+    });
+  }
+
+  function field(dl, label, value) {
+    if (!value) return;
+    dl.appendChild(el("dt", null, label));
+    dl.appendChild(el("dd", null, value));
+  }
+
+  function renderDetail(id) {
+    var i = items.filter(function (x) { return x.id === id; })[0];
+    if (!i) { location.hash = ""; return; }
+    $("d-name").textContent = fullName(i);
+    $("d-sub").textContent = "Received " + new Date(i.created_at).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+
+    var acts = $("d-actions"); acts.replaceChildren();
+    var mail = el("a", null, "Email"); mail.href = "mailto:" + i.email; acts.appendChild(mail);
+
+    var seg = $("d-status"); seg.replaceChildren();
+    STATUSES.forEach(function (s) {
+      var b = el("button", i.status === s[0] ? "on" : "", s[1]); b.type = "button";
+      b.addEventListener("click", function () {
+        var prev = i.status; i.status = s[0]; renderDetail(id);
+        api("/api/admin/update", { id: i.id, status: s[0] }).then(function (d) {
+          if (!d.ok) { i.status = prev; renderDetail(id); alert("Could not save the status. Try again."); }
+        });
+      });
+      seg.appendChild(b);
+    });
+
+    var dl = $("d-fields"); dl.replaceChildren();
+    field(dl, "Email", i.email);
+    field(dl, "Event type", i.event_type);
+    field(dl, "Date or timing", i.event_date);
+    field(dl, "Guests", i.guest_count);
+    field(dl, "Location", i.location);
+    field(dl, "Message", i.message);
+
+    $("d-notes").value = i.notes || "";
+    $("d-saved").textContent = "";
+    $("d-save").onclick = function () {
+      var v = $("d-notes").value;
+      $("d-save").disabled = true;
+      api("/api/admin/update", { id: i.id, notes: v }).then(function (d) {
+        $("d-save").disabled = false;
+        if (d.ok) { i.notes = v; $("d-saved").textContent = "Saved"; } else { $("d-saved").textContent = "Not saved. Try again."; }
+      });
+    };
+    show("detail");
+  }
+
+  function route() {
+    var id = location.hash.slice(1);
+    if (id) renderDetail(id); else { renderList(); show("list"); }
+  }
+
+  function load() {
+    return api("/api/admin/inquiries").then(function (d) {
+      if (d.httpStatus === 401) { show("login"); return false; }
+      if (!d.ok) { $("items").replaceChildren(el("p", "empty", "Could not load inquiries.")); show("list"); return false; }
+      items = d.items; route(); return true;
+    });
+  }
+
+  $("login-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    $("login-btn").disabled = true; $("login-err").textContent = "";
+    api("/api/admin/login", { passphrase: $("pass").value }).then(function (d) {
+      $("login-btn").disabled = false;
+      if (d.ok) { $("pass").value = ""; load(); } else { $("login-err").textContent = d.error || "Could not sign in."; }
+    }).catch(function () { $("login-btn").disabled = false; $("login-err").textContent = "Could not reach the site."; });
+  });
+  $("refresh").addEventListener("click", load);
+  $("back").addEventListener("click", function () { location.hash = ""; });
+  $("logout").addEventListener("click", function () {
+    api("/api/admin/logout", {}).then(function () { items = []; show("login"); });
+  });
+  window.addEventListener("hashchange", route);
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && !location.hash && !$("list").hidden) load();
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

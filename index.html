@@ -508,26 +508,43 @@
     send.disabled = true;
     send.textContent = "Sending";
 
-    fetch("https://api.web3forms.com/submit", {
+    // Save a copy to the site's own inbox and send the email notification.
+    // The inquiry counts as sent if either one works.
+    var saved = fetch("/api/inquiry", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        first_name: first,
+        last_name: last,
+        email: email,
+        event_type: payload.event_type,
+        event_date: payload.event_date,
+        guest_count: payload.guest_count,
+        location: payload.location,
+        message: message,
+        botcheck: payload.botcheck
+      })
+    })
+    .then(function (r) { return r.ok; })
+    .catch(function () { return false; });
+
+    var emailed = fetch("https://api.web3forms.com/submit", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
       body: JSON.stringify(payload)
     })
-    .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
-    .then(function (res) {
-      if (res.ok && res.data.success) {
+    .then(function (r) { return r.json().then(function (d) { return r.ok && d.success; }); })
+    .catch(function () { return false; });
+
+    Promise.all([saved, emailed]).then(function (results) {
+      if (results[0] || results[1]) {
         form.reset();
         status.className = "status ok";
         status.textContent = "Thank you. Your inquiry has been sent.";
       } else {
-        throw new Error(res.data.message || "Request failed");
+        status.className = "status err";
+        status.textContent = "Something went wrong and your message did not send. Please email booking@joshuastacyupclose.com or call 479 510 3304.";
       }
-    })
-    .catch(function () {
-      status.className = "status err";
-      status.textContent = "Something went wrong and your message did not send. Please email booking@joshuastacyupclose.com or call 479 510 3304.";
-    })
-    .finally(function () {
       send.disabled = false;
       send.textContent = "Send inquiry";
     });
