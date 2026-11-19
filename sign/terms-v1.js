@@ -2,6 +2,7 @@
 // so changing wording later means adding terms-v2.js, not editing this file.
 (function () {
   window.JSUC_TERMS = window.JSUC_TERMS || {};
+  function usd(c) { return "$" + (c / 100).toLocaleString("en-US", { minimumFractionDigits: c % 100 ? 2 : 0, maximumFractionDigits: 2 }); }
   window.JSUC_TERMS.v1 = function (d) {
     return [
       {
@@ -27,7 +28,7 @@
           { label: "Experiences.", text: "The Rounds (Performer moves through the room, performing for guests one small group at a time), The Station (Performer works at a set table and guests come to it), or The Show (a seated 45 minute performance), as marked in Event details." },
           { label: "Minimum booking.", text: "45 minutes for The Show. 2 hours for The Rounds or The Station." },
           { label: "Performance time.", text: "The Show is one continuous 45 minute performance. The Rounds and The Station run across the booked window, with short breaks as Performer needs them." },
-          { label: "Audience size.", text: "The Show seats up to 50 guests." },
+          { label: "Audience size.", text: "The Show seats up to 30 guests." },
           { label: "Material.", text: "Performer chooses all material and adjusts it to the room. Nothing explicit." },
         ],
       },
@@ -37,7 +38,7 @@
         items: [
           { label: "Deposit.", text: "25% of the total fee, due when Client signs. The deposit is nonrefundable because it holds the date, and it counts toward the total fee." },
           { label: "Balance.", text: "Due before the performance starts, by cash, Venmo, or PayPal. Payments are made to Joshua Stacy Up Close." },
-          { label: "Overtime.", text: "If Performer is available and agrees to stay past the end time, additional time is $150 per hour, billed in 30 minute blocks ($75 each) and paid the same day." },
+          { label: "Overtime.", text: "If Performer is available and agrees to stay past the end time, additional time is " + usd(d.overtimeCents || 15000) + " per hour, billed in 30 minute blocks (" + usd(Math.round((d.overtimeCents || 15000) / 2)) + " each) and paid the same day." },
           { label: "Travel.", text: "No travel fee within 30 miles of Fayetteville, AR. Past that, Client pays $0.725 per mile for each mile beyond 30, counted both ways, using Google Maps driving distance. Example: a venue 45 miles away adds 15 miles each way, or 30 miles, for $21.75." },
         ],
       },
@@ -90,7 +91,7 @@
         title: "Signatures",
         lead: "The date is held once Performer receives this agreement signed and the deposit within 7 days of sending it. After that, Performer may release the date.",
         items: [
-          { text: "This agreement may be signed on paper or electronically. Typing your full name in the signature box counts as your signature. A photo, scan, or electronic copy of a signed agreement is as valid as the original." },
+          { text: "This agreement is signed electronically. Typing your full name in the signature box and checking the agreement box counts as your signature. A saved or printed copy of the signed agreement is as valid as the original." },
         ],
       },
     ];

@@ -31,6 +31,7 @@ export async function onRequestGet({ request, env }) {
     venue: c.venue,
     fee_cents: c.fee_cents,
     deposit_cents: c.deposit_cents,
+    overtime_cents: c.overtime_cents || 15000,
   };
   if (c.status === "signed") {
     out.signed = {

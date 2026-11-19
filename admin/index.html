@@ -73,7 +73,11 @@
   input[type=text], input[type=number], input[type=date], input[type=time], input[type=email] { width: 100%; background: var(--oak); color: var(--foxed); border: 1px solid var(--rule); font: inherit; font-size: 1rem; padding: 0.8rem; border-radius: 0; color-scheme: dark; }
   .two { display: flex; gap: 0.8rem; } .two > div { flex: 1; min-width: 0; }
   .hint { color: var(--parch); font-size: 0.9rem; margin: 0.4rem 0 0; }
-  .sumbox { background: var(--oak); padding: 0.8rem 1rem; margin-top: 1.2rem; color: var(--parch); }
+  .sumbox { background: var(--oak); padding: 0.8rem 1rem; margin-top: 1.2rem; color: var(--parch); white-space: pre-line; }
+  select { width: 100%; background: var(--oak); color: var(--foxed); border: 1px solid var(--rule); font: inherit; font-size: 1rem; padding: 0.8rem; border-radius: 0; appearance: none; -webkit-appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--parch) 50%), linear-gradient(135deg, var(--parch) 50%, transparent 50%); background-position: calc(100% - 20px) 50%, calc(100% - 14px) 50%; background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; }
+  .editor { background: var(--oak); border-left: 3px solid var(--faded); padding: 0.2rem 1rem 1rem; margin-top: 0.8rem; }
+  .editor label:first-child { margin-top: 0.8rem; }
+  .linkbtn { background: none; border: 0; color: var(--parch); font: inherit; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: underline; padding: 0.4rem 0; margin-right: 1.2rem; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -128,8 +132,34 @@
   </div>
   <label for="cf-venue">Venue name and address</label>
   <textarea id="cf-venue" style="min-height:80px"></textarea>
+  <label for="cf-profile">Pricing</label>
+  <select id="cf-profile"></select>
+  <div class="sumbox" id="cf-pinfo" hidden></div>
+  <div id="cf-pactions" hidden>
+    <button class="linkbtn" id="cf-pedit" type="button">Edit profile</button>
+    <button class="linkbtn" id="cf-pdel" type="button">Delete profile</button>
+  </div>
+  <div class="editor" id="cf-editor" hidden>
+    <label for="pf-name">Profile name</label>
+    <input type="text" id="pf-name" maxlength="60" placeholder="Name it to save it, or leave blank to use once">
+    <div class="two">
+      <div><label for="pf-rb">Rounds, first 2 hrs ($)</label><input type="number" id="pf-rb" inputmode="decimal" min="0" step="0.01"></div>
+      <div><label for="pf-re">Rounds, each extra hr ($)</label><input type="number" id="pf-re" inputmode="decimal" min="0" step="0.01"></div>
+    </div>
+    <div class="two">
+      <div><label for="pf-sb">Station, first 2 hrs ($)</label><input type="number" id="pf-sb" inputmode="decimal" min="0" step="0.01"></div>
+      <div><label for="pf-se">Station, each extra hr ($)</label><input type="number" id="pf-se" inputmode="decimal" min="0" step="0.01"></div>
+    </div>
+    <div class="two">
+      <div><label for="pf-hf">Show, flat fee ($)</label><input type="number" id="pf-hf" inputmode="decimal" min="0" step="0.01"></div>
+      <div><label for="pf-he">Show, overtime per hr ($)</label><input type="number" id="pf-he" inputmode="decimal" min="0" step="0.01"></div>
+    </div>
+    <p class="hint">Overtime uses the extra-hour rate, billed in 30 minute blocks at half. Leave the name blank to use these prices for this contract only.</p>
+    <p style="margin-top:1rem"><button class="btn2 solid" id="pf-save" type="button">Save profile</button><span class="saved" id="pf-msg"></span></p>
+  </div>
   <label for="cf-fee">Total fee ($)</label>
   <input type="number" id="cf-fee" inputmode="decimal" min="0" step="0.01">
+  <p class="hint" id="cf-feehint" hidden><button class="linkbtn" id="cf-recalc" type="button">Use calculated fee</button></p>
   <div class="sumbox" id="cf-sum">Enter the fee to see the deposit.</div>
   <label for="cf-cname">Client name</label>
   <input type="text" id="cf-cname">
@@ -266,7 +296,7 @@
   }
 
   var EXPN = { hangout: "The Rounds", station: "The Station", show: "The Show" };
-  var EXPHINT = { hangout: "Minimum booking: 2 hours.", station: "Minimum booking: 2 hours.", show: "45 minutes, seats up to 50." };
+  var EXPHINT = { hangout: "Minimum booking: 2 hours.", station: "Minimum booking: 2 hours.", show: "45 minutes, seats up to 30." };
   function money(c) { return "$" + (c / 100).toLocaleString("en-US", { minimumFractionDigits: c % 100 ? 2 : 0, maximumFractionDigits: 2 }); }
   function dateNice(s) { return new Date(s + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }); }
   function linkFor(c) { return location.origin + "/sign/?t=" + c.token; }
@@ -312,14 +342,93 @@
     box.appendChild(p);
   }
 
-  var cf = { inquiry: null, exp: "" };
+  var cf = { inquiry: null, exp: "", sel: "", editing: null, feeManual: false, profiles: [], delArmed: false };
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function addMinutes(t, m) { var p = t.split(":"), tot = (+p[0]) * 60 + (+p[1]) + m; tot = ((tot % 1440) + 1440) % 1440; return pad(Math.floor(tot / 60)) + ":" + pad(tot % 60); }
+  var PF = [["pf-rb", "rounds_base"], ["pf-re", "rounds_extra"], ["pf-sb", "station_base"], ["pf-se", "station_extra"], ["pf-hf", "show_flat"], ["pf-he", "show_extra"]];
+  function num(id) { var v = parseFloat($(id).value); return isFinite(v) && v >= 0 ? v : null; }
+  function editorPrices() {
+    var o = {}, ok = true;
+    PF.forEach(function (f) { var v = num(f[0]); if (v === null) ok = false; o[f[1]] = v; });
+    return ok ? o : null;
+  }
+  function selectedProfile() {
+    return cf.profiles.filter(function (p) { return p.id === cf.sel; })[0] || null;
+  }
+  function activePrices() {
+    if (cf.sel === "custom" || cf.editing) return editorPrices();
+    return selectedProfile();
+  }
+  function minutesBetween() {
+    var s = $("cf-start").value, e = $("cf-end").value;
+    if (!s || !e) return null;
+    var a = s.split(":"), b = e.split(":");
+    var m = (+b[0]) * 60 + (+b[1]) - ((+a[0]) * 60 + (+a[1]));
+    if (m <= 0) m += 1440;
+    return m;
+  }
+  function hrs(m) { var h = m / 60; return (Math.round(h * 100) / 100) + (h === 1 ? " hr" : " hrs"); }
+  function usd(n) { return "$" + (Math.round(n * 100) / 100).toLocaleString("en-US", { minimumFractionDigits: Math.round(n * 100) % 100 ? 2 : 0, maximumFractionDigits: 2 }); }
+  function calc() {
+    var p = activePrices();
+    if (!p || !cf.exp) return null;
+    if (cf.exp === "show") return { fee: p.show_flat, text: "The Show flat fee " + usd(p.show_flat), ot: p.show_extra };
+    var base = cf.exp === "hangout" ? p.rounds_base : p.station_base;
+    var extra = cf.exp === "hangout" ? p.rounds_extra : p.station_extra;
+    var m = minutesBetween();
+    if (m === null) return { fee: base, text: "First 2 hrs " + usd(base) + ". Enter start and end times to add extra hours.", ot: extra };
+    var over = Math.max(0, m - 120);
+    var fee = Math.round((base + extra * over / 60) * 100) / 100;
+    var text = over ? "First 2 hrs " + usd(base) + " + " + hrs(over) + " at " + usd(extra) + " = " + usd(fee) : "2 hr minimum " + usd(base) + (m < 120 ? " (booked time is under 2 hrs)" : "");
+    return { fee: fee, text: text, ot: extra };
+  }
   function updateSum() {
+    var c = calc(), lines = [];
+    if (c) lines.push(c.text);
     var f = parseFloat($("cf-fee").value);
-    if (!isFinite(f) || f <= 0) { $("cf-sum").textContent = "Enter the fee to see the deposit."; return; }
-    var fee = Math.round(f * 100), dep = Math.round(fee * 0.25);
-    $("cf-sum").textContent = "Deposit (25%): " + money(dep) + "   Balance: " + money(fee - dep);
+    if (isFinite(f) && f > 0) {
+      var fee = Math.round(f * 100), dep = Math.round(fee * 0.25);
+      lines.push("Deposit (25%): " + money(dep) + "   Balance: " + money(fee - dep));
+    } else { lines.push("Enter the fee to see the deposit."); }
+    if (c) lines.push("Overtime: " + usd(c.ot) + " per hr, in 30 minute blocks (" + usd(c.ot / 2) + " each)");
+    $("cf-sum").textContent = lines.join("\n");
+  }
+  function refreshPricing() {
+    var c = calc();
+    if (c && !cf.feeManual) $("cf-fee").value = c.fee;
+    $("cf-feehint").hidden = !(c && cf.feeManual && parseFloat($("cf-fee").value) !== c.fee);
+    updateSum();
+  }
+  function renderProfileSelect() {
+    var sel = $("cf-profile"); sel.replaceChildren();
+    var first = el("option", null, cf.profiles.length ? "Choose pricing" : "No saved profiles yet"); first.value = ""; sel.appendChild(first);
+    cf.profiles.forEach(function (p) { var o = el("option", null, p.name); o.value = p.id; sel.appendChild(o); });
+    var cu = el("option", null, "Custom prices"); cu.value = "custom"; sel.appendChild(cu);
+    sel.value = cf.sel;
+  }
+  function profileSummary(p) {
+    return "The Rounds: " + usd(p.rounds_base) + " first 2 hrs, " + usd(p.rounds_extra) + " each extra hr\nThe Station: " + usd(p.station_base) + " first 2 hrs, " + usd(p.station_extra) + " each extra hr\nThe Show: " + usd(p.show_flat) + " flat, overtime " + usd(p.show_extra) + " per hr";
+  }
+  function fillEditor(p) {
+    $("pf-name").value = p ? p.name : "";
+    PF.forEach(function (f) { $(f[0]).value = p ? p[f[1]] : ""; });
+    $("pf-msg").textContent = "";
+  }
+  function renderPricingUI() {
+    var p = selectedProfile();
+    $("cf-pinfo").hidden = !(p && !cf.editing);
+    if (p) $("cf-pinfo").textContent = profileSummary(p);
+    $("cf-pactions").hidden = !(p && !cf.editing);
+    $("cf-editor").hidden = !(cf.sel === "custom" || cf.editing);
+    $("pf-save").textContent = cf.editing ? "Save changes" : "Save as new profile";
+    $("cf-pdel").textContent = "Delete profile"; cf.delArmed = false;
+  }
+  function loadProfiles(selectId) {
+    return api("/api/admin/profiles").then(function (d) {
+      cf.profiles = d.ok ? d.profiles : [];
+      if (selectId !== undefined) cf.sel = selectId;
+      renderProfileSelect(); renderPricingUI(); refreshPricing();
+    }).catch(function () { cf.profiles = []; renderProfileSelect(); });
   }
   function renderExpButtons() {
     var seg = $("cf-exp"); seg.replaceChildren();
@@ -328,28 +437,65 @@
       b.addEventListener("click", function () {
         cf.exp = k; renderExpButtons(); $("cf-exp-hint").textContent = EXPHINT[k];
         if (k === "show" && $("cf-start").value) $("cf-end").value = addMinutes($("cf-start").value, 45);
+        refreshPricing();
       });
       seg.appendChild(b);
     });
   }
   function openContractForm(i) {
-    cf.inquiry = i; cf.exp = "";
+    cf.inquiry = i; cf.exp = ""; cf.sel = ""; cf.editing = null; cf.feeManual = false; cf.profiles = [];
     $("cf-title").textContent = "Contract for " + fullName(i);
     ["cf-date", "cf-start", "cf-end", "cf-fee"].forEach(function (id) { $(id).value = ""; });
     $("cf-venue").value = i.location || ""; $("cf-cname").value = fullName(i); $("cf-cemail").value = i.email;
     $("cf-err").textContent = ""; $("cf-exp-hint").textContent = ""; $("cf-create").disabled = false;
-    renderExpButtons(); updateSum(); show("cform");
+    fillEditor(null);
+    renderExpButtons(); renderProfileSelect(); renderPricingUI(); refreshPricing(); show("cform");
+    loadProfiles(undefined);
   }
-  $("cf-fee").addEventListener("input", updateSum);
-  $("cf-start").addEventListener("change", function () { if (cf.exp === "show" && this.value) $("cf-end").value = addMinutes(this.value, 45); });
+  $("cf-profile").addEventListener("change", function () {
+    cf.sel = this.value; cf.editing = null; cf.feeManual = false;
+    if (cf.sel === "custom") fillEditor(null);
+    renderPricingUI(); refreshPricing();
+  });
+  $("cf-pedit").addEventListener("click", function () {
+    var p = selectedProfile(); if (!p) return;
+    cf.editing = p.id; fillEditor(p); renderPricingUI(); refreshPricing();
+  });
+  $("cf-pdel").addEventListener("click", function () {
+    var p = selectedProfile(); if (!p) return;
+    if (!cf.delArmed) { cf.delArmed = true; this.textContent = "Tap again to delete"; return; }
+    api("/api/admin/profiles", { action: "delete", id: p.id }).then(function (d) {
+      if (d.ok) { cf.sel = ""; cf.editing = null; cf.profiles = d.profiles; renderProfileSelect(); renderPricingUI(); refreshPricing(); }
+    });
+  });
+  PF.forEach(function (f) { $(f[0]).addEventListener("input", refreshPricing); });
+  $("pf-save").addEventListener("click", function () {
+    var msg = $("pf-msg"); msg.textContent = "";
+    var pr = editorPrices(), name = $("pf-name").value.trim();
+    if (!name) { msg.textContent = "Name it to save it."; return; }
+    if (!pr) { msg.textContent = "Fill in all six prices."; return; }
+    var body = { action: "save", id: cf.editing || "", name: name };
+    PF.forEach(function (f) { body[f[1]] = pr[f[1]]; });
+    api("/api/admin/profiles", body).then(function (d) {
+      if (!d.ok) { msg.textContent = d.error || "Could not save."; return; }
+      cf.profiles = d.profiles; cf.sel = d.id; cf.editing = null; cf.feeManual = false;
+      renderProfileSelect(); renderPricingUI(); refreshPricing();
+    }).catch(function () { msg.textContent = "Could not reach the site."; });
+  });
+  $("cf-fee").addEventListener("input", function () { cf.feeManual = true; refreshPricing(); });
+  $("cf-recalc").addEventListener("click", function () { cf.feeManual = false; refreshPricing(); });
+  $("cf-start").addEventListener("change", function () { if (cf.exp === "show" && this.value) $("cf-end").value = addMinutes(this.value, 45); refreshPricing(); });
+  $("cf-end").addEventListener("change", refreshPricing);
   $("cf-back").addEventListener("click", function () { route(); });
   $("cf-create").addEventListener("click", function () {
     var err = $("cf-err"); err.textContent = "";
     if (!cf.exp) { err.textContent = "Pick an experience."; return; }
+    var cc = calc();
+    if (!cc) { err.textContent = "Choose pricing, or fill in all six custom prices."; return; }
     $("cf-create").disabled = true;
     api("/api/admin/contract", {
       inquiry_id: cf.inquiry.id, experience: cf.exp, event_date: $("cf-date").value, start_time: $("cf-start").value, end_time: $("cf-end").value,
-      venue: $("cf-venue").value, fee: $("cf-fee").value, client_name: $("cf-cname").value, client_email: $("cf-cemail").value
+      venue: $("cf-venue").value, fee: $("cf-fee").value, overtime_rate: cc.ot, client_name: $("cf-cname").value, client_email: $("cf-cemail").value
     }).then(function (d) {
       $("cf-create").disabled = false;
       if (!d.ok) { err.textContent = d.error || "Could not create the contract."; return; }

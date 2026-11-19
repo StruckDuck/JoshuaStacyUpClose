@@ -69,10 +69,33 @@ const SCHEMA = [
     ig_handle TEXT
   )`,
   `CREATE INDEX IF NOT EXISTS idx_contracts_inquiry ON contracts(inquiry_id)`,
+  `CREATE TABLE IF NOT EXISTS price_profiles (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    rounds_base_cents INTEGER NOT NULL,
+    rounds_extra_cents INTEGER NOT NULL,
+    station_base_cents INTEGER NOT NULL,
+    station_extra_cents INTEGER NOT NULL,
+    show_flat_cents INTEGER NOT NULL,
+    show_extra_cents INTEGER NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`,
 ];
 
 export async function ensureSchema(db) {
   await db.batch(SCHEMA.map((s) => db.prepare(s)));
+  // Older contracts predate per-contract overtime rates; add the column once.
+  const col = await db
+    .prepare("SELECT COUNT(*) AS n FROM pragma_table_info('contracts') WHERE name = 'overtime_cents'")
+    .first();
+  if (!col || !col.n) {
+    try {
+      await db.prepare("ALTER TABLE contracts ADD COLUMN overtime_cents INTEGER").run();
+    } catch (e) {
+      // Another request added it first.
+    }
+  }
 }
 
 export function json(data, status = 200, extraHeaders = {}) {

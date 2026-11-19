@@ -38,6 +38,9 @@ export async function onRequestPost({ request, env }) {
   const fee = Number(b.fee);
   if (!isFinite(fee) || fee <= 0 || fee > 50000) return json({ ok: false, error: "Enter the total fee." }, 400);
   const fee_cents = Math.round(fee * 100);
+  const overtime = Number(b.overtime_rate);
+  if (!isFinite(overtime) || overtime <= 0 || overtime > 5000) return json({ ok: false, error: "Choose pricing so the overtime rate is set." }, 400);
+  const overtime_cents = Math.round(overtime * 100);
   const deposit_cents = Math.round(fee_cents * 0.25);
 
   const client_name = clean(b.client_name, 200) || (inquiry.first_name + " " + inquiry.last_name).trim();
@@ -48,10 +51,10 @@ export async function onRequestPost({ request, env }) {
   await env.DB.batch([
     env.DB
       .prepare(
-        `INSERT INTO contracts (token, inquiry_id, created_at, status, terms_version, client_name, client_email, experience, event_date, start_time, end_time, venue, fee_cents, deposit_cents)
-         VALUES (?, ?, ?, 'sent', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO contracts (token, inquiry_id, created_at, status, terms_version, client_name, client_email, experience, event_date, start_time, end_time, venue, fee_cents, deposit_cents, overtime_cents)
+         VALUES (?, ?, ?, 'sent', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
-      .bind(token, inquiry.id, Date.now(), TERMS_VERSION, client_name, client_email, experience, event_date, start_time, end_time, venue, fee_cents, deposit_cents),
+      .bind(token, inquiry.id, Date.now(), TERMS_VERSION, client_name, client_email, experience, event_date, start_time, end_time, venue, fee_cents, deposit_cents, overtime_cents),
     env.DB.prepare("UPDATE inquiries SET status = 'contract', updated_at = ? WHERE id = ? AND status NOT IN ('signed','booked')").bind(Date.now(), inquiry.id),
   ]);
 

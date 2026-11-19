@@ -134,7 +134,7 @@
       phone: s ? s.phone : "", dateText: dateText(contract.event_date),
       timeText: timeText(contract.start_time) + " to " + timeText(contract.end_time),
       venue: contract.venue, onsite: s ? s.onsite_name + ", " + s.onsite_phone : "",
-      feeText: money(contract.fee_cents), experienceName: EXP[contract.experience],
+      feeText: money(contract.fee_cents), overtimeCents: contract.overtime_cents, experienceName: EXP[contract.experience],
       photos: s ? PHOTO[s.social] : "", ig: s && s.ig ? "@" + s.ig : "", signed: !!s
     };
   }
