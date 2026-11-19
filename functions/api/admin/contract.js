@@ -38,9 +38,12 @@ export async function onRequestPost({ request, env }) {
   const fee = Number(b.fee);
   if (!isFinite(fee) || fee <= 0 || fee > 50000) return json({ ok: false, error: "Enter the total fee." }, 400);
   const fee_cents = Math.round(fee * 100);
-  const overtime = Number(b.overtime_rate);
-  if (!isFinite(overtime) || overtime <= 0 || overtime > 5000) return json({ ok: false, error: "Choose pricing so the overtime rate is set." }, 400);
-  const overtime_cents = Math.round(overtime * 100);
+  let overtime_cents = null;
+  if (experience !== "show") {
+    const overtime = Number(b.overtime_rate);
+    if (!isFinite(overtime) || overtime <= 0 || overtime > 5000) return json({ ok: false, error: "Choose pricing so the overtime rate is set." }, 400);
+    overtime_cents = Math.round(overtime * 100);
+  }
   const deposit_cents = Math.round(fee_cents * 0.25);
 
   const client_name = clean(b.client_name, 200) || (inquiry.first_name + " " + inquiry.last_name).trim();

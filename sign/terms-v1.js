@@ -38,9 +38,9 @@
         items: [
           { label: "Deposit.", text: "25% of the total fee, due when Client signs. The deposit is nonrefundable because it holds the date, and it counts toward the total fee." },
           { label: "Balance.", text: "Due before the performance starts, by cash, Venmo, or PayPal. Payments are made to Joshua Stacy Up Close." },
-          { label: "Overtime.", text: "If Performer is available and agrees to stay past the end time, additional time is " + usd(d.overtimeCents || 15000) + " per hour, billed in 30 minute blocks (" + usd(Math.round((d.overtimeCents || 15000) / 2)) + " each) and paid the same day." },
+          d.experienceName === "The Show" ? null : { label: "Overtime.", text: "If Performer is available and agrees to stay past the end time, additional time is " + usd(d.overtimeCents || 15000) + " per hour, billed in 30 minute blocks (" + usd(Math.round((d.overtimeCents || 15000) / 2)) + " each) and paid the same day." },
           { label: "Travel.", text: "No travel fee within 30 miles of Fayetteville, AR. Past that, Client pays $0.725 per mile for each mile beyond 30, counted both ways, using Google Maps driving distance. Example: a venue 45 miles away adds 15 miles each way, or 30 miles, for $21.75." },
-        ],
+        ].filter(Boolean),
       },
       {
         title: "Cancellation and rescheduling",

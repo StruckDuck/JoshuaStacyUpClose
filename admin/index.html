@@ -150,11 +150,8 @@
       <div><label for="pf-sb">Station, first 2 hrs ($)</label><input type="number" id="pf-sb" inputmode="decimal" min="0" step="0.01"></div>
       <div><label for="pf-se">Station, each extra hr ($)</label><input type="number" id="pf-se" inputmode="decimal" min="0" step="0.01"></div>
     </div>
-    <div class="two">
-      <div><label for="pf-hf">Show, flat fee ($)</label><input type="number" id="pf-hf" inputmode="decimal" min="0" step="0.01"></div>
-      <div><label for="pf-he">Show, overtime per hr ($)</label><input type="number" id="pf-he" inputmode="decimal" min="0" step="0.01"></div>
-    </div>
-    <p class="hint">Overtime uses the extra-hour rate, billed in 30 minute blocks at half. Leave the name blank to use these prices for this contract only.</p>
+    <label for="pf-hf">Show, flat fee ($)</label><input type="number" id="pf-hf" inputmode="decimal" min="0" step="0.01">
+    <p class="hint">Overtime on The Rounds and The Station uses the extra-hour rate, billed in 30 minute blocks at half. The Show has no overtime. Leave the name blank to use these prices for this contract only.</p>
     <p style="margin-top:1rem"><button class="btn2 solid" id="pf-save" type="button">Save profile</button><span class="saved" id="pf-msg"></span></p>
   </div>
   <label for="cf-fee">Total fee ($)</label>
@@ -345,7 +342,7 @@
   var cf = { inquiry: null, exp: "", sel: "", editing: null, feeManual: false, profiles: [], delArmed: false };
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function addMinutes(t, m) { var p = t.split(":"), tot = (+p[0]) * 60 + (+p[1]) + m; tot = ((tot % 1440) + 1440) % 1440; return pad(Math.floor(tot / 60)) + ":" + pad(tot % 60); }
-  var PF = [["pf-rb", "rounds_base"], ["pf-re", "rounds_extra"], ["pf-sb", "station_base"], ["pf-se", "station_extra"], ["pf-hf", "show_flat"], ["pf-he", "show_extra"]];
+  var PF = [["pf-rb", "rounds_base"], ["pf-re", "rounds_extra"], ["pf-sb", "station_base"], ["pf-se", "station_extra"], ["pf-hf", "show_flat"]];
   function num(id) { var v = parseFloat($(id).value); return isFinite(v) && v >= 0 ? v : null; }
   function editorPrices() {
     var o = {}, ok = true;
@@ -372,7 +369,7 @@
   function calc() {
     var p = activePrices();
     if (!p || !cf.exp) return null;
-    if (cf.exp === "show") return { fee: p.show_flat, text: "The Show flat fee " + usd(p.show_flat), ot: p.show_extra };
+    if (cf.exp === "show") return { fee: p.show_flat, text: "The Show flat fee " + usd(p.show_flat), ot: null };
     var base = cf.exp === "hangout" ? p.rounds_base : p.station_base;
     var extra = cf.exp === "hangout" ? p.rounds_extra : p.station_extra;
     var m = minutesBetween();
@@ -390,7 +387,7 @@
       var fee = Math.round(f * 100), dep = Math.round(fee * 0.25);
       lines.push("Deposit (25%): " + money(dep) + "   Balance: " + money(fee - dep));
     } else { lines.push("Enter the fee to see the deposit."); }
-    if (c) lines.push("Overtime: " + usd(c.ot) + " per hr, in 30 minute blocks (" + usd(c.ot / 2) + " each)");
+    if (c && c.ot !== null) lines.push("Overtime: " + usd(c.ot) + " per hr, in 30 minute blocks (" + usd(c.ot / 2) + " each)");
     $("cf-sum").textContent = lines.join("\n");
   }
   function refreshPricing() {
@@ -407,7 +404,7 @@
     sel.value = cf.sel;
   }
   function profileSummary(p) {
-    return "The Rounds: " + usd(p.rounds_base) + " first 2 hrs, " + usd(p.rounds_extra) + " each extra hr\nThe Station: " + usd(p.station_base) + " first 2 hrs, " + usd(p.station_extra) + " each extra hr\nThe Show: " + usd(p.show_flat) + " flat, overtime " + usd(p.show_extra) + " per hr";
+    return "The Rounds: " + usd(p.rounds_base) + " first 2 hrs, " + usd(p.rounds_extra) + " each extra hr\nThe Station: " + usd(p.station_base) + " first 2 hrs, " + usd(p.station_extra) + " each extra hr\nThe Show: " + usd(p.show_flat) + " flat";
   }
   function fillEditor(p) {
     $("pf-name").value = p ? p.name : "";
@@ -495,7 +492,7 @@
     $("cf-create").disabled = true;
     api("/api/admin/contract", {
       inquiry_id: cf.inquiry.id, experience: cf.exp, event_date: $("cf-date").value, start_time: $("cf-start").value, end_time: $("cf-end").value,
-      venue: $("cf-venue").value, fee: $("cf-fee").value, overtime_rate: cc.ot, client_name: $("cf-cname").value, client_email: $("cf-cemail").value
+      venue: $("cf-venue").value, fee: $("cf-fee").value, overtime_rate: cc.ot === null ? "" : cc.ot, client_name: $("cf-cname").value, client_email: $("cf-cemail").value
     }).then(function (d) {
       $("cf-create").disabled = false;
       if (!d.ok) { err.textContent = d.error || "Could not create the contract."; return; }

@@ -6,7 +6,6 @@ const FIELDS = [
   ["station_base", "station_base_cents"],
   ["station_extra", "station_extra_cents"],
   ["show_flat", "show_flat_cents"],
-  ["show_extra", "show_extra_cents"],
 ];
 
 function view(r) {
@@ -18,7 +17,6 @@ function view(r) {
     station_base: r.station_base_cents / 100,
     station_extra: r.station_extra_cents / 100,
     show_flat: r.show_flat_cents / 100,
-    show_extra: r.show_extra_cents / 100,
   };
 }
 
@@ -79,7 +77,7 @@ export async function onRequestPost({ request, env }) {
         `UPDATE price_profiles SET name = ?, rounds_base_cents = ?, rounds_extra_cents = ?, station_base_cents = ?, station_extra_cents = ?,
          show_flat_cents = ?, show_extra_cents = ?, updated_at = ? WHERE id = ?`
       )
-      .bind(name, cents.rounds_base_cents, cents.rounds_extra_cents, cents.station_base_cents, cents.station_extra_cents, cents.show_flat_cents, cents.show_extra_cents, now, id)
+      .bind(name, cents.rounds_base_cents, cents.rounds_extra_cents, cents.station_base_cents, cents.station_extra_cents, cents.show_flat_cents, 0, now, id)
       .run();
   } else {
     id = newToken().slice(0, 16);
@@ -88,7 +86,7 @@ export async function onRequestPost({ request, env }) {
         `INSERT INTO price_profiles (id, name, rounds_base_cents, rounds_extra_cents, station_base_cents, station_extra_cents, show_flat_cents, show_extra_cents, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
-      .bind(id, name, cents.rounds_base_cents, cents.rounds_extra_cents, cents.station_base_cents, cents.station_extra_cents, cents.show_flat_cents, cents.show_extra_cents, now, now)
+      .bind(id, name, cents.rounds_base_cents, cents.rounds_extra_cents, cents.station_base_cents, cents.station_extra_cents, cents.show_flat_cents, 0, now, now)
       .run();
   }
   return json({ ok: true, id, profiles: await list(env) });
