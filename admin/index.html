@@ -313,15 +313,20 @@
     if (c.status === "signed") p.appendChild(el("p", null, "Signed by " + c.signed_name + " on " + new Date(c.signed_at).toLocaleDateString(undefined, { month: "short", day: "numeric" }) + ". When the deposit arrives, set the status to Booked."));
     var row = el("div", "row2");
     if (c.status !== "signed") {
-      var m = el("a", "btn2 solid", "Email link");
-      m.href = "mailto:" + c.client_email + "?body=" + encodeURIComponent(linkFor(c));
-      row.appendChild(m);
-      var cp = el("button", "btn2", "Copy link"); cp.type = "button";
-      cp.addEventListener("click", function () {
+      function copyLink(btn, label) {
         var u = linkFor(c);
-        if (navigator.clipboard) navigator.clipboard.writeText(u).then(function () { cp.textContent = "Copied"; }, function () { prompt("Copy this link", u); });
+        if (navigator.clipboard) navigator.clipboard.writeText(u).then(function () { btn.textContent = "Copied"; }, function () { prompt("Copy this link", u); });
         else prompt("Copy this link", u);
+      }
+      var ce = el("button", "btn2 solid", "Copy and email link"); ce.type = "button";
+      ce.addEventListener("click", function () {
+        var q = "from:" + c.client_email + " OR to:" + c.client_email;
+        copyLink(ce);
+        window.open("https://mail.google.com/mail/#search/" + encodeURIComponent(q), "_blank");
       });
+      row.appendChild(ce);
+      var cp = el("button", "btn2", "Copy link"); cp.type = "button";
+      cp.addEventListener("click", function () { copyLink(cp); });
       row.appendChild(cp);
     }
     var o = el("a", "btn2", c.status === "signed" ? "View signed agreement" : "Preview"); o.href = linkFor(c); o.target = "_blank"; o.rel = "noopener"; row.appendChild(o);

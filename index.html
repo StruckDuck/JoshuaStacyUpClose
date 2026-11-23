@@ -255,6 +255,10 @@
     border-radius: 0;
   }
   textarea { min-height: 140px; resize: vertical; }
+  .toast { position: fixed; left: 50%; bottom: 1.5rem; transform: translate(-50%, 1rem); width: min(26rem, calc(100% - 2rem)); background: var(--worn-oak, #221C14); color: var(--foxed-paper); border: 1px solid var(--rule); border-top: 3px solid var(--lithograph); padding: 1.1rem 2.6rem 1.1rem 1.3rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); opacity: 0; pointer-events: none; transition: opacity 0.25s ease, transform 0.25s ease; z-index: 50; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+  .toast p { margin: 0; font-size: 1rem; line-height: 1.5; }
+  .toast button { position: absolute; top: 0.4rem; right: 0.5rem; background: none; border: 0; color: var(--parchment); font: inherit; font-size: 1.5rem; line-height: 1; padding: 0.3rem 0.5rem; cursor: pointer; }
   .status { margin-top: 1rem; min-height: 1.5rem; font-size: 0.95rem; }
   .status.ok { color: var(--faded-ink); }
   .status.err { color: #A63E14; }
@@ -282,6 +286,8 @@
     body { font-size: 17px; }
     .hero .wrap { grid-template-columns: 1fr; gap: 2rem; padding-top: 2rem; padding-bottom: 3rem; }
     .hero .copy { order: 2; }
+    .hero .copy { text-align: center; }
+    .hero p.sub { margin-left: auto; margin-right: auto; }
     .hero img { order: 1; }
     .exp, .exp.flip { grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 3.25rem; }
     .exp.flip .exp-img { order: 0; }
@@ -491,10 +497,23 @@
   </div>
 </footer>
 
+  <div class="toast" id="toast" role="status" aria-live="polite"><p>Thank you. Your inquiry has been sent. I will reply by email, so check your spam folder if you do not see it.</p><button type="button" id="toast-close" aria-label="Close">&times;</button></div>
 <script>
   var ACCESS_KEY = "f85354f1-845d-4f79-9571-134e1ed76403";
   var form = document.getElementById("contact-form");
   var status = document.getElementById("status");
+  var toastTimer;
+  function showToast() {
+    var t = document.getElementById("toast");
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, 9000);
+  }
+  function hideToast() { document.getElementById("toast").classList.remove("show"); }
+  document.getElementById("toast-close").addEventListener("click", hideToast);
+  document.getElementById("toast").addEventListener("mouseenter", function () { clearTimeout(toastTimer); });
+  document.getElementById("toast").addEventListener("mouseleave", function () { toastTimer = setTimeout(hideToast, 4000); });
+
   var send = document.getElementById("send");
 
   form.addEventListener("submit", function (e) {
@@ -565,8 +584,9 @@
     Promise.all([saved, emailed]).then(function (results) {
       if (results[0] || results[1]) {
         form.reset();
-        status.className = "status ok";
-        status.textContent = "Thank you. Your inquiry has been sent.";
+        status.className = "status";
+        status.textContent = "";
+        showToast();
       } else {
         status.className = "status err";
         status.textContent = "Something went wrong and your message did not send. Please email booking@joshuastacyupclose.com or call 479 510 3304.";
