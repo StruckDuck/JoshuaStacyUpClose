@@ -77,6 +77,8 @@
   select { width: 100%; background: var(--oak); color: var(--foxed); border: 1px solid var(--rule); font: inherit; font-size: 1rem; padding: 0.8rem; border-radius: 0; appearance: none; -webkit-appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--parch) 50%), linear-gradient(135deg, var(--parch) 50%, transparent 50%); background-position: calc(100% - 20px) 50%, calc(100% - 14px) 50%; background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; }
   .editor { background: var(--oak); border-left: 3px solid var(--faded); padding: 0.2rem 1rem 1rem; margin-top: 0.8rem; }
   .editor label:first-child { margin-top: 0.8rem; }
+  .dangerzone { margin-top: 3.5rem; padding-top: 1.2rem; border-top: 1px solid var(--rule); }
+  .linkbtn.danger { color: #C0623A; margin-right: 0; }
   .linkbtn { background: none; border: 0; color: var(--parch); font: inherit; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: underline; padding: 0.4rem 0; margin-right: 1.2rem; cursor: pointer; }
 </style>
 </head>
@@ -116,6 +118,10 @@
   <label for="d-notes">Your notes</label>
   <textarea id="d-notes"></textarea>
   <p><button class="btn" id="d-save" type="button">Save notes</button><span class="saved" id="d-saved"></span></p>
+  <div class="dangerzone">
+    <button class="linkbtn danger" id="d-delete" type="button">Delete inquiry</button>
+    <p class="hint" id="d-delmsg"></p>
+  </div>
 </section>
 
 <section class="screen" id="cform" hidden>
@@ -288,6 +294,26 @@
         $("d-save").disabled = false;
         if (d.ok) { i.notes = v; $("d-saved").textContent = "Saved"; } else { $("d-saved").textContent = "Not saved. Try again."; }
       });
+    };
+    var del = $("d-delete"), delMsg = $("d-delmsg"), delTimer;
+    var signed = i.contract && i.contract.status === "signed";
+    var hasContract = !!i.contract;
+    function resetDelete() { del.textContent = "Delete inquiry"; delMsg.textContent = ""; del.dataset.armed = ""; }
+    resetDelete();
+    del.onclick = function () {
+      if (!del.dataset.armed) {
+        del.dataset.armed = "1";
+        del.textContent = "Tap again to permanently delete";
+        delMsg.textContent = signed ? "This inquiry has a SIGNED contract. Deleting erases the signed agreement too." : (hasContract ? "This also deletes its contract." : "");
+        clearTimeout(delTimer); delTimer = setTimeout(resetDelete, 6000);
+        return;
+      }
+      clearTimeout(delTimer); del.disabled = true;
+      api("/api/admin/inquiry-delete", { id: i.id }).then(function (d) {
+        del.disabled = false;
+        if (d.ok) { items = items.filter(function (x) { return x.id !== i.id; }); location.hash = ""; route(); }
+        else { resetDelete(); delMsg.textContent = "Could not delete. Try again."; }
+      }).catch(function () { del.disabled = false; resetDelete(); delMsg.textContent = "Could not reach the site."; });
     };
     show("detail");
   }
