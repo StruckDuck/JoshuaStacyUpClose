@@ -407,7 +407,7 @@
     if (c) lines.push(c.text);
     var f = parseFloat($("cf-fee").value);
     if (isFinite(f) && f > 0) {
-      var fee = Math.round(f * 100), dep = Math.round(fee * 0.25);
+      var fee = Math.round(f * 100), dep = Math.floor(fee * 0.25 / 100) * 100;
       lines.push("Deposit (25%): " + money(dep) + "   Balance: " + money(fee - dep));
     } else { lines.push("Enter the fee to see the deposit."); }
     if (c && c.ot !== null) lines.push("Overtime: " + usd(c.ot) + " per hr, in 30 minute blocks (" + usd(c.ot / 2) + " each)");

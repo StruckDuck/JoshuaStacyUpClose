@@ -44,7 +44,7 @@ export async function onRequestPost({ request, env }) {
     if (!isFinite(overtime) || overtime <= 0 || overtime > 5000) return json({ ok: false, error: "Choose pricing so the overtime rate is set." }, 400);
     overtime_cents = Math.round(overtime * 100);
   }
-  const deposit_cents = Math.round(fee_cents * 0.25);
+  const deposit_cents = Math.floor(fee_cents * 0.25 / 100) * 100;
 
   const client_name = clean(b.client_name, 200) || (inquiry.first_name + " " + inquiry.last_name).trim();
   const client_email = clean(b.client_email, 200) || inquiry.email;
